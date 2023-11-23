@@ -40,6 +40,37 @@
 				</template>
 			</uni-grid>
 		</view>
+		
+		
+		<view>
+			<label>上传图片</label>
+			<uni-file-picker 
+				v-model="imageValue"  
+				file-mediatype="video"
+				mode="grid"
+				file-extname="png,jpg"
+				:limit="1"
+				@progress="progress" 
+				@success="success" 
+				@fail="fail" 
+				@select="select"
+			/>
+		</view>
+		
+		<label>上传音频</label>
+			<uni-file-picker 
+				v-model="imageValue"  
+				file-mediatype="vi"
+				mode="grid"
+				file-extname="png,jpg"
+				:limit="1"
+				@progress="progress" 
+				@success="success" 
+				@fail="fail" 
+				@select="select"
+			/>
+		</view>
+		
 	</view>
 </template>
 
@@ -56,6 +87,7 @@
 		data() {
 			return {
 				gridList: [],
+				imageValue:[],
 				current: 0,
 				hasLogin:false
 			}
@@ -83,6 +115,33 @@
 					icon: 'none'
 				})
 			},
+			
+			
+			
+			// 获取上传状态
+						select(e){
+							console.log('选择文件：',e)
+						},
+						// 获取上传进度
+						progress(e){
+							console.log('上传进度：',e)
+						},
+						
+						// 上传成功
+						success(e){
+							console.log('上传成功',e)
+							console.log('xxxx',e.tempFiles[0].url)
+						},
+						
+						// 上传失败
+						fail(e){
+							console.log('上传失败：',e)
+						},
+			
+			go() {
+				console.log("fdsfdsf");
+			},
+			
 			/**
 			 * banner加载后触发的回调
 			 */
