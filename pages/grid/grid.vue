@@ -1,77 +1,96 @@
 <template>
-	<view class="warp">
-		<!-- #ifdef APP-PLUS -->
-		<statusBar></statusBar>
-		<!-- #endif -->
-		
-		<!-- banner -->
-		<unicloud-db ref="bannerdb" v-slot:default="{data, loading, error, options}" collection="opendb-banner"
-			field="_id,bannerfile,open_url,title" @load="onqueryload">
-			<!-- 当无banner数据时显示占位图 -->
-			<image v-if="!(loading||data.length)" class="banner-image" src="/static/uni-center/headers.png" mode="aspectFill" :draggable="false" />
-			
-			<swiper v-else class="swiper-box" @change="changeSwiper" :current="current" indicator-dots>
-				<swiper-item v-for="(item, index) in data" :key="item._id">
-					<view class="swiper-item" @click="clickBannerItem(item)">
-						<image class="banner-image" :src="item.bannerfile.url" mode="aspectFill" :draggable="false" />
-					</view>
-				</swiper-item>
-			</swiper>
-		</unicloud-db>
-
-		<!-- 宫格 -->
-		<view class="section-box">
-			<text class="decoration"></text>
-			<text class="section-text">{{$t('grid.grid')}}</text>
-		</view>
-		
-		<view class="example-body">
-			<uni-grid :column="3" :highlight="true" @change="change">
-				<template v-for="(item,i) in gridList">
-					<uni-grid-item :index="i" :key="i"
-						v-if="i<3 || i>2&&i<6&&hasLogin || i>5&&uniIDHasRole('admin')"
-					>
-						<view class="grid-item-box" style="background-color: #fff;">
-							<!-- <image :src="'/static/grid/c'+(i+1)+'.png'" class="image" mode="aspectFill" /> -->
-							<text class="big-number">{{i+1}}</text>
-							<text class="text">{{item}}</text>
-						</view>
-					</uni-grid-item>
-				</template>
-			</uni-grid>
-		</view>
+	
+	
 		
 		
 		<view>
-			<label>上传图片</label>
+			
+			<view style="text-align: center;">爸爸的AI工具</view>
+			
+			
+			<view style="margin-top: 20rpx;">
+				<label style="color: blue; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif">请上传图片</label>
+				<uni-file-picker
+					file-mediatype="image"
+					mode="grid"
+					file-extname="jpeg,jpg,png"
+					:limit="1"
+					@progress="progress1" 
+					@success="success1" 
+					@fail="fail1" 
+					@delete="delete1"
+					@select="select1"></uni-file-picker>
+			</view>
+			
+			
+			<view style="margin-top: 40rpx;">
+				<label style="color: blue; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif">请上传声音文件</label>
 			<uni-file-picker 
-				v-model="imageValue"  
-				file-mediatype="video"
+				file-mediatype="audio"
 				mode="grid"
-				file-extname="png,jpg"
+				file-extname="mp3,wav"
 				:limit="1"
 				@progress="progress" 
 				@success="success" 
 				@fail="fail" 
-				@select="select"
-			/>
-		</view>
-		
-		<label>上传音频</label>
-			<uni-file-picker 
-				v-model="imageValue"  
-				file-mediatype="vi"
-				mode="grid"
-				file-extname="png,jpg"
-				:limit="1"
-				@progress="progress" 
-				@success="success" 
-				@fail="fail" 
-				@select="select"
-			/>
-		</view>
-		
-	</view>
+				@delete="delete2"
+				@select="select"/>
+				<view>
+					<view class="page-body">
+						<view class="page-section page-section-gap" style="text-align: left;">
+							<audio  :src="currentOne.src" :poster="currentOne.poster" :name="currentOne.name" :author="currentOne.author" :action="audioAction" :controls="currentOne.controlsFlag"></audio>
+						</view>
+					</view>
+				</view>
+			</view>
+			
+			<br><br>
+			<view>
+				<label>设置其他参数</label><br>
+				Pose style:<slider value="0" min="0" max="46" @change="poseStypeChange" show-value  activeColor="#FFCC33" backgroundColor="#000000" block-color="#8A6DE9" />
+				<br>
+				face model resolution:
+				<view>
+					<radio-group @change="sizeChange">
+					<label class="radio"><radio value="256" checked="true" />256</label>
+					<label class="radio"><radio value="512" />512</label>
+					</radio-group>
+				</view>
+				<br>
+				preprocess:
+				<view>
+					<radio-group @change="preprocessChange">
+					<label class="radio"><radio value="crop" checked="true" />crop</label>
+					<label class="radio"><radio value="resize" />resize</label>
+					<label class="radio"><radio value="full"  />full</label>
+					<label class="radio"><radio value="extcrop" />extcrop</label>
+					<label class="radio"><radio value="extfull" />extfull</label>
+					</radio-group>
+				</view>
+				<br>
+				
+				
+				<view>
+					<checkbox value="false" :checked="stillChecked" @click="stillgo" ><view class="uni-title uni-common-mt">Still Mode (fewer head motion, works with preprocess `full`)</view></checkbox>
+				</view>
+				<br>
+				<checkbox value="gfpgan" :checked="gfpganChecked" @click="gfpgango" ><view class="uni-title uni-common-mt">GFPGAN as Face enhancer</view></checkbox>
+				<br><br>
+				batch size in generation:<slider value="2" min="2" step="2" max="10" @change="batchSizeChange" show-value  activeColor="#FFCC33" backgroundColor="#000000" block-color="#8A6DE9" />
+				<br>
+				
+				
+				<button type="primary" style="background-color: #ff4500" @click="generate">生成</button>
+				
+			</view>
+			
+			<view>
+				<video id="myVideo" :src="videoSrc"
+				                   enable-danmu danmu-btn controls></video>
+			</view>
+			
+		</view>	
+			
 </template>
 
 <script>
@@ -86,85 +105,230 @@
 		// #endif
 		data() {
 			return {
-				gridList: [],
-				imageValue:[],
-				current: 0,
-				hasLogin:false
+				currentOne: {
+					controlsFlag: false,
+					poster: 'https://qiniu-web-assets.dcloud.net.cn/unidoc/zh/music-a.png',
+					name: '请上传声音文件',
+					author: '暂无',
+					src: '',
+					
+				},
+				audioAction: {
+					method: 'pause'
+				},
+				stillChecked:false,
+				stillValue:false,
+				gfpganChecked:false,
+				gfpganValue:'',
+				
+				source_image:'',
+				driven_audio:'',
+				pose_style:'',
+				size:'',
+				still:'',
+				preprocess:'',
+				enhancer:'',
+				batch_size:2,
+				
+				videoSrc:''
 			}
 		},
+		
+		onReady: function(res) {
+		        // #ifndef MP-ALIPAY
+		        this.videoContext = uni.createVideoContext('myVideo')
+		        // #endif
+		    },
 		onShow() {
-			this.hasLogin = uniCloud.getCurrentUserInfo().tokenExpired > Date.now()
+			
 		},
 		onLoad() {
-			let gridList = []
-			for (var i = 0; i < 3; i++) {
-				gridList.push( this.$t('grid.visibleToAll') )
-			}
-			for (var i = 0; i < 3; i++) {
-				gridList.push( this.$t('grid.invisibleToTourists') )
-			}
-			for (var i = 0; i < 3; i++) {
-				gridList.push( this.$t('grid.adminVisible') )
-			}
-			this.gridList = gridList
+			
 		},
 		methods: {
-			change(e) {
-				uni.showToast({
-					title:this.$t('grid.clickTip') + " " + `${e.detail.index + 1}` + " " + this.$t('grid.clickTipGrid'),
-					icon: 'none'
-				})
+			
+		 async	generate() {
+			 console.log("this.source_image",this.source_image)
+			 await uni.request({
+			 	url:'http://127.0.0.1:8000/generate',
+				sslVerify:false,
+			 	method:'POST',
+				data: {
+				        /* seaName:'https://mp-1fecd741-6a1b-4984-8a41-b0526ec15758.cdn.bspapp.com/cloudstorage/7d127ece-8b09-480d-92b9-5b8e36e12c64.jpg',
+						drivenAudio2: 'https://mp-1fecd741-6a1b-4984-8a41-b0526ec15758.cdn.bspapp.com/cloudstorage/a25e7de9-197f-4e21-9dae-1976e1cfd624.wav',
+					source_image:this.source_image */
+					
+					driven_audio:this.driven_audio,
+					source_image:this.source_image,
+					pose_style:this.pose_style,
+					size:this.size,
+					result_dir:'',
+					still:this.stillValue,
+					preprocess:this.preprocess,
+					enhancer:this.enhancer,
+					batch_size:this.batch_size
+					
+					},
+				success: function(res) {
+						console.log("res.data",res.data);
+					}
+			 	
+			 });
+			 
+			 
+				/* const resultUrl = await uni.request({
+					url:'http://127.0.0.1:8000/generate',
+					method:'POST',
+					dataType:'json',
+					data:{
+						 driven_audio:this.driven_audio,
+						 source_image:this.source_image,
+						 pose_style:this.pose_style,
+						 size:this.size,
+						 result_dir:'',
+						 still:this.still,
+						 preprocess:this.preprocess,
+						 enhancer:this.enhancer,
+						 batch_size:this.batch_size
+					}
+				});
+				 */
+				//this.videoSrc = resultUrl;
+				//console.log("resultUrl:>>>>",resultUrl);
+				
 			},
 			
+			gfpgango() {
+				console.log("gfpganChecked ",this.gfpganChecked)
+				
+				this.gfpganChecked = !this.gfpganChecked
+				console.log("gfpganChecked 333 ",this.gfpganChecked)
+				if (this.gfpganChecked) {
+					this.enhancer = 'gfpgan'
+				}
+				else {
+					this.enhancer = 'RestoreFormer'
+				}
+				console.log("enhancer ",this.enhancer)
+				
+			}, 
 			
+			
+			/**
+			 * @param {Object} e
+			 * pose_style:'',
+				size:'',
+				preprocess:'',
+			 * still
+			 * 
+			 */
+			poseStypeChange(e) {
+				console.log(' styleChange value 发生变化：' + e.detail.value)
+				this.pose_style = e.detail.value
+				console.log('this.pose_style：' + this.pose_style)
+			},
+			
+			sizeChange(e) {
+				console.log('change value 发生变化：' + e.detail.value)
+				this.size = e.detail.value
+				console.log('this.size：' + this.size)
+			},
+			
+			preprocessChange(e) {
+				console.log('change value 发生变化：' + e.detail.value)
+				this.preprocess = e.detail.value
+				console.log('this.preprocess：' + this.preprocess)
+			},
+			stillgo() {
+				console.log("stillChecked ",this.stillChecked)
+				
+				this.stillChecked = !this.stillChecked
+				console.log("stillChecked 333 ",this.stillChecked)
+				if (this.stillChecked) {
+					this.stillValue = true
+				}
+				else {
+					this.stillValue = false
+				}
+				console.log("stillValue ",this.stillValue)
+				
+			}, 
+			
+			
+		
+					
+			batchSizeChange(e) {
+				console.log('batchSizeChange value 发生变化：' + e.detail.value)
+				this.batch_size = e.detail.value
+				console.log('this.batch_size：' + this.batch_size)
+			},
 			
 			// 获取上传状态
 						select(e){
-							console.log('选择文件：',e)
+							console.log('选择音频文件：',e)
 						},
 						// 获取上传进度
 						progress(e){
-							console.log('上传进度：',e)
+							console.log('上传音频进度：',e)
 						},
 						
-						// 上传成功
+						select1(e){
+							console.log('选择图片文件：',e)
+						},
+						// 获取上传进度
+						progress1(e){
+							console.log('上传图片进度：',e)
+						},
+						
+						
+						// 上传图片成功
+						success1(e){
+							console.log('上传成功',e)
+							this.source_image = e.tempFiles[0].url
+							console.log('source_image >>>>> ',e.tempFiles[0].url)
+						},
+						
+						delete1(e){
+							console.log('删除图片',e)
+							this.source_image = ''
+							console.log('source_image >>>>> ',this.source_image)
+						},
+						
+						// 上传音频成功
 						success(e){
 							console.log('上传成功',e)
-							console.log('xxxx',e.tempFiles[0].url)
+							this.currentOne.controlsFlag = true
+							this.currentOne.src = e.tempFiles[0].url
+							this.currentOne.name = "已有"
+							this.currentOne.author = "请播放"
+							this.driven_audio = this.currentOne.src
+							console.log('audioSrc>>>>>',this.currentOne.src);
+							
+							console.log('driven_audio',this.driven_audio)
+						},
+						
+						delete2(e){
+							console.log('删除图片',e)
+							this.currentOne.controlsFlag = false
+							this.currentOne.src = ''
+							this.currentOne.name = '请上传声音文件'
+							this.currentOne.author = '暂无'
+							this.driven_audio = ''
+							console.log('audioSrc>>>>>',this.currentOne.src);
+							console.log('driven_audio',this.driven_audio)
 						},
 						
 						// 上传失败
 						fail(e){
-							console.log('上传失败：',e)
+							console.log('上传音频失败：',e)
+						},
+						// 上传失败
+						fail1(e){
+							console.log('上传图片失败：',e)
 						},
 			
-			go() {
-				console.log("fdsfdsf");
-			},
+		
 			
-			/**
-			 * banner加载后触发的回调
-			 */
-			onqueryload(data) {
-			},
-			changeSwiper(e) {
-				this.current = e.detail.current
-			},
-			/**
-			 * 点击banner的处理
-			 */
-			clickBannerItem(item) {
-				// 有外部链接-跳转url
-				if (item.open_url) {
-					uni.navigateTo({
-						url: '/uni_modules/uni-id-pages/pages/common/webview/webview?url=' + item.open_url + '&title=' + item.title,
-						success: res => {},
-						fail: () => {},
-						complete: () => {}
-					});
-				}
-				// 其余业务处理
-			}
 		}
 	}
 </script>
