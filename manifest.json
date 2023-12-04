@@ -67,5 +67,28 @@
     "uniStatistics" : {
         "enable" : false
     },
-    "vueVersion" : "2"
+    "vueVersion" : "2",
+	"h5": {
+		"devServer": {
+			"https": false,
+			 "proxy": {
+			      "/api": {
+			        "target": "http://127.0.0.1:7860",
+					"ws": true,
+			        "changeOrigin": true,
+			        "pathRewrite": {
+			          "^/api": ""
+			        }
+			      },
+				  "/sadTalkerApi": {
+				    "target": "http://127.0.0.1:8000",
+				  					"ws": true,
+				    "changeOrigin": true,
+				    "pathRewrite": {
+				      "^/sadTalkerApi": ""
+				    }
+				  }
+			  }
+		}
+	 }
 }
