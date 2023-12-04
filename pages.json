@@ -15,7 +15,30 @@
 				"navigationStyle": "custom"
 				//#endif
 			}
-		}, {
+		},
+		
+		
+		
+		{
+			"path" : "pages/test/test",
+			"style" : 
+			{
+				"navigationBarTitleText" : "",
+				"enablePullDownRefresh" : false
+			}
+		},
+		{
+			"path" : "pages/grid/test",
+			"style" : 
+			{
+				"navigationBarTitleText" : "",
+				"enablePullDownRefresh" : false
+			}
+		},
+		
+		
+		
+		{
 			"path": "pages/list/search/search",
 			"style": {
 				"navigationBarTitleText": "搜索"
